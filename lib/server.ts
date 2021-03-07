@@ -7,4 +7,4 @@ const PORT = process.env.PORT || 8000;
 
 
 
-app.listen(PORT, () => console.log(`push notif service listening on port ${PORT}!`))
+app.listen(PORT, () => console.log(`service listening on port ${PORT}!`))
