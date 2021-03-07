@@ -1,0 +1,3 @@
+// TODO
+// Implement user model here ...
+// See sequelize docs for how to implement it 

@@ -1,0 +1,627 @@
+{
+  "swagger": "2.0",
+  "info": {
+      "description": "Swagger documentation for Push Notification Service",
+      "version": "1.0.0",
+      "title": "Push Notification Service for TelMed",
+      "contact": {
+          "name": "Anggardha Febriano",
+          "email": "anggardha.febriano@ui.ac.id"
+      },
+      "license": {
+          "name": "Apache 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+      }
+  },
+  "schemes": ["http","https"],
+  "host": "localhost:8000",
+  "basePath": "/api/push/v1",
+  "definitions": {
+    "Topics": {
+      "type": "object",
+      "properties": {
+          "id": {
+              "type": "integer",
+              "format": "int64"
+          },
+          "name": {
+              "type": "string"
+          }
+      }
+    },
+    "User": {
+      "type": "object",
+      "properties": {
+          "id": {
+              "type": "integer",
+              "format": "int64"
+          },
+          "firebaseId": {
+              "type": "string"
+          }
+      }
+    },
+    "RegisterToken": {
+      "type": "object",
+      "properties": {
+          "id": {
+              "type": "integer",
+              "format": "int64"
+          },
+          "registerToken": {
+              "type": "string"
+          }
+      }
+    },
+    "500Error": {
+      "type": "object",
+      "example": {
+        "msg": "Some error message"
+      }
+    }
+  },
+  "paths" : {
+    "/topics" : {
+      "get" : {
+          "summary" : "Get all registered topics",
+          "description": "Get all registered topics currently active",
+          "produces": ["application/json"],
+          "consumes": ["application/json"],
+          "parameters": [],
+          "responses": {
+            "200": {
+                "description": "successful operation",
+                "schema": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/definitions/Topics"
+                    }
+                }
+            },
+            "500": {
+                "description": "Server Error",
+                "schema": {
+                  "$ref": "#/definitions/500Error"
+                }
+            }
+        }
+      }
+    },
+    "/init-hospital" : {
+      "post" : {
+          "summary" : "Creating topics for new registered hospital",
+          "description": "This endpoint is need to be called every new hospital is created, failing to do so will resulting inconsistent data between Push Notification service with Repository Service and Appointment Service",
+          "produces": ["application/json"],
+          "consumes": ["application/json"],
+          "parameters": [
+            {
+              "in": "body",
+              "name": "body",
+              "description": "topics name, value of hospital name + id(for uniqueness)",
+              "required": true,
+              "type": "object",
+              "example": {
+                "name": "hospital-1"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+                "description": "successful operation",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "topic_staff": {
+                      "$ref": "#/definitions/Topics"
+                    },
+                    "doctor_staff": {
+                      "$ref": "#/definitions/Topics"
+                    }
+                  }
+                }
+            },
+            "500": {
+                "description": "Server Error",
+                "schema": {
+                  "$ref": "#/definitions/500Error"
+                }
+            }
+        }
+      }
+    },
+    "/patient-regis" : {
+      "post" : {
+          "summary" : "Register patient for the first time to Push Notification service",
+          "description": "This endpoint is need to be called every new user is created, failing to do so will resulting inconsistent data between Push Notification service with Repository Service and Appointment Service",
+          "produces": ["application/json"],
+          "consumes": ["application/json"],
+          "parameters": [
+            {
+              "in": "body",
+              "name": "body",
+              "description": "user firebaseId and user FCM register token",
+              "required": true,
+              "type": "object",
+              "example": {
+                "firebaseId": "patient-1",
+                "registerToken": "token-12345"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+                "description": "successful operation",
+                "schema": {
+                    "type": "object",
+                    "example": {
+                      "msg":"push notif configured for patient"
+                    }
+                }
+            },
+            "500": {
+                "description": "Server Error",
+                "schema": {
+                  "$ref": "#/definitions/500Error"
+                }
+            }
+        }
+      }
+    },
+    "/doctor-regis" : {
+      "post" : {
+          "summary" : "Register doctor to the registered hospital",
+          "description": "This endpoint is need to be called every doctor registered to new hospital, failing to do so will resulting inconsistent data between Push Notification service with Repository Service and Appointment Service",
+          "produces": ["application/json"],
+          "consumes": ["application/json"],
+          "parameters": [
+            {
+              "in": "body",
+              "name": "body",
+              "description": "user firebaseId, user FCM register token and hospital name+id",
+              "required": true,
+              "type": "object",
+              "example": {
+                "firebaseId": "doctor-1",
+                "registerToken": "token-12345",
+                "topics": "hospital-1"
+              }
+            }
+          ],
+          "responses": {
+            "200(CASE 1)": {
+                "description": "response for new doctor registered to telmed",
+                "schema": {
+                    "type": "object",
+                    "example": {
+                      "msg":"doctor registered to push notif service and join hospital topics"
+                    }
+                }
+            },
+            "200(CASE 2)": {
+              "description": "registered doctor join to other hospital",
+              "schema": {
+                  "type": "object",
+                  "example": {
+                    "msg":"doctor registered to hospital topics"
+                  }
+              }
+          },
+            "500": {
+                "description": "Server Error",
+                "schema": {
+                  "$ref": "#/definitions/500Error"
+                }
+            }
+        }
+      }
+    },
+    "/staff-regis" : {
+      "post" : {
+          "summary" : "Register staff to the registered hospital",
+          "description": "This endpoint is need to be called every staff registered to new hospital, failing to do so will resulting inconsistent data between Push Notification service with Repository Service and Appointment Service",
+          "produces": ["application/json"],
+          "consumes": ["application/json"],
+          "parameters": [
+            {
+              "in": "body",
+              "name": "body",
+              "description": "user firebaseId, user FCM register token and hospital name+id",
+              "required": true,
+              "type": "object",
+              "example": {
+                "firebaseId": "staff-1",
+                "registerToken": "token-12345",
+                "topics": "hospital-1"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+                "description": "response for new staff registered to hospital",
+                "schema": {
+                    "type": "object",
+                    "example": {
+                      "msg":"staff registered to push notif service and hospital topics"
+                    }
+                }
+            },
+            "500": {
+                "description": "Server Error",
+                "schema": {
+                  "$ref": "#/definitions/500Error"
+                }
+            }
+        }
+      }
+    },
+    "/check-user" : {
+      "post" : {
+          "summary" : "Check if user already registered to push notification service or not",
+          "description": "This endpoint is used when client side want to check if registering user to server is required or not",
+          "produces": ["application/json"],
+          "consumes": ["application/json"],
+          "parameters": [
+            {
+              "in": "body",
+              "name": "body",
+              "description": "user firebaseId",
+              "required": true,
+              "type": "object",
+              "example": {
+                "firebaseId": "doctor-1"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+                "description": "response for checking user",
+                "schema": {
+                    "type": "object",
+                    "example": {
+                      "userFound": true
+                    }
+                }
+            },
+            "500": {
+                "description": "Server Error",
+                "schema": {
+                  "$ref": "#/definitions/500Error"
+                }
+            }
+          }
+        }
+      },
+      "/refresh-token" : {
+        "post" : {
+            "summary" : "Registering user new token to push notification service",
+            "description": "This endpoint is used when user FCM register token is refreshed, if this endpoint not called when user register roken is refreshed, in the future user can't receive any notification anymore",
+            "produces": ["application/json"],
+            "consumes": ["application/json"],
+            "parameters": [
+              {
+                "in": "body",
+                "name": "body",
+                "description": "user firebaseId,and new user FCM register token",
+                "required": true,
+                "type": "object",
+                "example": {
+                  "firebaseId": "doctor-1",
+                  "registerToken": "token-12345"
+                }
+              }
+            ],
+            "responses": {
+              "200": {
+                  "description": "success response",
+                  "schema": {
+                      "type": "object",
+                      "example": {
+                        "msg": "token refreshed"
+                      }
+                  }
+              },
+              "404": {
+                "description": "user not found",
+                "schema": {
+                  "msg": "user not found"
+                }
+              },
+              "500": {
+                  "description": "Server Error",
+                  "schema": {
+                    "$ref": "#/definitions/500Error"
+                  }
+              }
+            }
+          }
+        },
+        "/init-consultation" : {
+          "post" : {
+              "summary" : "Creating special topics for every consultation, exclusive for doctor and patient",
+              "description": "This endpoint need to be called every new consultation created, used for creating topics for user and doctor to receive notification about the consultation, such as reminder, ect",
+              "produces": ["application/json"],
+              "consumes": ["application/json"],
+              "parameters": [
+                {
+                  "in": "body",
+                  "name": "body",
+                  "description": "patient firebaseId,doctor firebaseId and new created consultation id",
+                  "required": true,
+                  "type": "object",
+                  "properties": {
+                    "patientId": {
+                      "type": "string"
+                    },
+                    "doctorId": {
+                      "type": "string"
+                    },
+                    "consultationId": {
+                      "type": "string"
+                    }
+                  },
+                  "example": {
+                    "patientId": "patient-1",
+                    "doctorId": "doctor-1",
+                    "consultationId": "consultation-1"
+                  }
+                }
+              ],
+              "responses": {
+                "200": {
+                    "description": "success response",
+                    "schema": {
+                        "type": "object",
+                        "example": {
+                          "msg": "topics consultation-1 created for doctor and patient"
+                        }
+                    }
+                },
+                "500": {
+                    "description": "Server Error",
+                    "schema": {
+                      "$ref": "#/definitions/500Error"
+                    }
+                }
+              }
+            }
+          },
+          "/close-topics" : {
+            "delete" : {
+                "summary" : "Closing topics",
+                "description": "This endpoint need to be called every consultation ended",
+                "produces": ["application/json"],
+                "consumes": ["application/json"],
+                "parameters": [
+                  {
+                    "in": "body",
+                    "name": "body",
+                    "description": "consultation id",
+                    "required": true,
+                    "type": "object",
+                    "properties": {
+                      "consultationId": {
+                        "type": "string"
+                      }
+                    },
+                    "example": {
+                      "consultationId": "consultation-1"
+                    }
+                  }
+                ],
+                "responses": {
+                  "200": {
+                      "description": "success response",
+                      "schema": {
+                          "type": "object",
+                          "example": {
+                            "msg": "topics closed"
+                          }
+                      }
+                  },
+                  "500": {
+                      "description": "Server Error",
+                      "schema": {
+                        "$ref": "#/definitions/500Error"
+                      }
+                  }
+                }
+              }
+            },
+            "/create-topics-for-user" : {
+              "post" : {
+                  "summary" : "Creating topics for user if needed",
+                  "description": "This endpoint can be used when upstream server want to create specific topics for specific user, such as payment topics for specific transaction",
+                  "produces": ["application/json"],
+                  "consumes": ["application/json"],
+                  "parameters": [
+                    {
+                      "in": "body",
+                      "name": "body",
+                      "description": "user id and topic name(unique)",
+                      "required": true,
+                      "type": "object",
+                      "example": {
+                        "firebaseId": "patient-1",
+                        "topic": "payment-1"
+                      }
+                    }
+                  ],
+                  "responses": {
+                    "200": {
+                        "description": "success response",
+                        "schema": {
+                            "type": "object",
+                            "example": {
+                              "msg": "topics payment-1 created for user patient-1"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server Error",
+                        "schema": {
+                          "$ref": "#/definitions/500Error"
+                        }
+                    }
+                  }
+                }
+              },
+              "/subscribe-user-to-topics" : {
+                "post" : {
+                    "summary" : "Registering user to topics",
+                    "description": "This endpoint can be used when user want to subscribe to new topic",
+                    "produces": ["application/json"],
+                    "consumes": ["application/json"],
+                    "parameters": [
+                      {
+                        "in": "body",
+                        "name": "body",
+                        "description": "user id and topic name(unique)",
+                        "required": true,
+                        "type": "object",
+                        "example": {
+                          "firebaseId": "patient-1",
+                          "topic": "payment-1"
+                        }
+                      }
+                    ],
+                    "responses": {
+                      "200": {
+                          "description": "success response",
+                          "schema": {
+                              "type": "object",
+                              "example": {
+                                "msg": "topics payment-1 subscribed by user patient-1"
+                              }
+                          }
+                      },
+                      "500": {
+                          "description": "Server Error",
+                          "schema": {
+                            "$ref": "#/definitions/500Error"
+                          }
+                      }
+                    }
+                  }
+                },
+                "/unsubscribe-user-from-topics" : {
+                  "delete" : {
+                      "summary" : "unsubscribe user from topics",
+                      "description": "This endpoint can be used when user want to unsubscribe from topic",
+                      "produces": ["application/json"],
+                      "consumes": ["application/json"],
+                      "parameters": [
+                        {
+                          "in": "body",
+                          "name": "body",
+                          "description": "user id and topic name(unique)",
+                          "required": true,
+                          "type": "object",
+                          "example": {
+                            "firebaseId": "patient-1",
+                            "topic": "payment-1"
+                          }
+                        }
+                      ],
+                      "responses": {
+                        "200": {
+                            "description": "success response",
+                            "schema": {
+                                "type": "object",
+                                "example": {
+                                  "msg": "user patient-1 unsubscribed from topics payment-1"
+                                }
+                            }
+                        },
+                        "500": {
+                            "description": "Server Error",
+                            "schema": {
+                              "$ref": "#/definitions/500Error"
+                            }
+                        }
+                      }
+                    }
+                  },
+                  "/notif/user" : {
+                    "post" : {
+                        "summary" : "send notification to specific user",
+                        "description": "This endpoint used for send notification for specific user when firebaseId of target user known(BODY payload format will changed depend on requirement)",
+                        "produces": ["application/json"],
+                        "consumes": ["application/json"],
+                        "parameters": [
+                          {
+                            "in": "body",
+                            "name": "body",
+                            "description": "notification content and firebaseId",
+                            "required": true,
+                            "type": "object",
+                            "example": {
+                              "notification": {
+                                "title": "Jangan Lupa!",
+                                "body": "Kamu belum menyelesaikan pembayaran kamu"
+                              },
+                              "firebaseId": "patient-1"
+                            }
+                          }
+                        ],
+                        "responses": {
+                          "200": {
+                              "description": "success response",
+                              "schema": {
+                                  "type": "object",
+                                  "example": {
+                                    "msg": "messageId from FCM"
+                                  }
+                              }
+                          },
+                          "500": {
+                              "description": "Server Error",
+                              "schema": {
+                                "$ref": "#/definitions/500Error"
+                              }
+                          }
+                        }
+                      }
+                    },
+                    "/notif/topics" : {
+                      "post" : {
+                          "summary" : "send notification to all user in topics",
+                          "description": "This endpoint used for send notification for all user subscribed in topics(BODY payload format will changed depend on requirement)",
+                          "produces": ["application/json"],
+                          "consumes": ["application/json"],
+                          "parameters": [
+                            {
+                              "in": "body",
+                              "name": "body",
+                              "description": "notification content and firebaseId",
+                              "required": true,
+                              "type": "object",
+                              "example": {
+                                "notification": {
+                                  "title": "Jangan Lupa!",
+                                  "body": "Kamu belum menyelesaikan pembayaran kamu"
+                                },
+                                "topic": "payment-1"
+                              }
+                            }
+                          ],
+                          "responses": {
+                            "200": {
+                                "description": "success response",
+                                "schema": {
+                                    "type": "object",
+                                    "example": {
+                                      "msg": "all user subscribed to topics already notified"
+                                    }
+                                }
+                            },
+                            "500": {
+                                "description": "Server Error",
+                                "schema": {
+                                  "$ref": "#/definitions/500Error"
+                                }
+                            }
+                          }
+                        }
+                      }
+    }
+}
