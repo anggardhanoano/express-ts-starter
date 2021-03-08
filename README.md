@@ -1,4 +1,5 @@
 # Express Typescript Starter
+https://github.com/anggardhanoano/express-ts-starter.git
 
 Express Starter powered with Typescript and Sequelize
 
