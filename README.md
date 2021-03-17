@@ -18,4 +18,4 @@ Express Starter powered with Typescript and Sequelize
 
 ### http://localhost:8000/api/v1/docs
 
-## ini starter punya sooal
+## ini starter punya gua
