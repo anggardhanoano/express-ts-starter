@@ -17,7 +17,3 @@ Express Starter powered with Typescript and Sequelize
 ## Swagger Endpoint
 
 ### http://localhost:8000/api/v1/docs
-
-## bikin testing
-
-## ini starter punya gua
